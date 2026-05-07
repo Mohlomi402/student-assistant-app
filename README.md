@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # student_assistant_app
 
 A new Flutter project.
@@ -14,3 +15,7 @@ A few resources to get you started if this is your first Flutter project:
 For help getting started with Flutter development, view the
 [online documentation](https://docs.flutter.dev/), which offers tutorials,
 samples, guidance on mobile development, and a full API reference.
+=======
+# Student-Assistant-App
+System to manage student assistant applications
+>>>>>>> b5b503a3580eaed2598812aa78a917630ffe3199
