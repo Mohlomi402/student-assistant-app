@@ -1,41 +1,58 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:student_assistant_app/viewmodels/auth_viewmodel.dart';
-import 'register_view.dart';
 
-class LoginView extends StatefulWidget {
-  const LoginView({super.key});
+class RegisterView extends StatefulWidget {
+  const RegisterView({super.key});
 
   @override
-  State<LoginView> createState() => _LoginViewState();
+  State<RegisterView> createState() => _RegisterViewState();
 }
 
-class _LoginViewState extends State<LoginView> {
-  final _formKey = GlobalKey<FormState>();  
+class _RegisterViewState extends State<RegisterView> {
+  final _formKey = GlobalKey<FormState>();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _confirmPasswordController = TextEditingController();
 
-  bool _obscureText = true;
+  bool _obscurePassword = true;
+  bool _obscureConfirmPassword = true;
 
-  void _handleLogin() async {
+  void _handleRegister() async {
     if (!_formKey.currentState!.validate()) return;
+
+    if (_passwordController.text != _confirmPasswordController.text) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Passwords do not match'),
+          backgroundColor: Colors.grey,
+        ),
+      );
+      return;
+    }
 
     final authVm = Provider.of<AuthViewModel>(context, listen: false);
 
-    bool success = await authVm.login(
+    bool success = await authVm.register(
       _emailController.text.trim(),
       _passwordController.text,
     );
 
-    if (!success && mounted) {
+    if (success && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Registration successful! Please login.'),
+          backgroundColor: Colors.green,
+
+        ),
+      );
+
+      Navigator.pop(context);
+    } else if (!success && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(authVm.errorMessage ?? 'Login failed'),
+          content: Text(authVm.errorMessage ?? 'Registration failed'),
           backgroundColor: Colors.grey[800],
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
         ),
       );
     }
@@ -45,6 +62,7 @@ class _LoginViewState extends State<LoginView> {
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
+    _confirmPasswordController.dispose();
     super.dispose();
   }
 
@@ -58,46 +76,50 @@ class _LoginViewState extends State<LoginView> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
+
               Container(
                 width: 80,
                 height: 80,
                 decoration: BoxDecoration(
                   color: Colors.black,
                   borderRadius: BorderRadius.circular(20),
+
                 ),
 
                 child: const Icon(
                   Icons.school,
                   size: 40,
                   color: Colors.white,
+
                 ),
               ),
 
               const SizedBox(height: 24),
               const Text(
-                'Student Assistant',
+                'Create Account',
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
                   color: Colors.black,
+
                 ),
               ),
 
               const SizedBox(height: 8),
               Text(
-                'Sign in to continue',
+                'Sign up to get started',
                 style: TextStyle(
                   fontSize: 14,
                   color: Colors.grey[600],
                 ),
               ),
-
               const SizedBox(height: 48),
 
               Form(
                 key: _formKey,
                 child: Column(
                   children: [
+
 
                     TextFormField(
                       controller: _emailController,
@@ -107,11 +129,13 @@ class _LoginViewState extends State<LoginView> {
                         prefixIcon: Icon(Icons.email_outlined, color: Colors.grey[600]),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
+
                         ),
 
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                           borderSide: const BorderSide(color: Colors.black),
+
                         ),
                       ),
 
@@ -129,19 +153,62 @@ class _LoginViewState extends State<LoginView> {
                     const SizedBox(height: 16),
                     TextFormField(
                       controller: _passwordController,
-                      obscureText: _obscureText,
+                      obscureText: _obscurePassword,
                       decoration: InputDecoration(
                         labelText: 'Password',
                         prefixIcon: Icon(Icons.lock_outline, color: Colors.grey[600]),
                         suffixIcon: IconButton(
                           icon: Icon(
-                            _obscureText ? Icons.visibility_off : Icons.visibility,
+                            _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                            color: Colors.grey[600],
+
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              _obscurePassword = !_obscurePassword;
+                            });
+                          },
+                        ),
+
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+
+                        ),
+
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: Colors.black),
+
+                        ),
+                      ),
+
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Password is required';
+                        }
+                        if (value.length < 6) {
+                          return 'Password must be at least 6 characters';
+                        }
+                        return null;
+                      },
+                    ),
+
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: _confirmPasswordController,
+                      obscureText: _obscureConfirmPassword,
+                      decoration: InputDecoration(
+                        labelText: 'Confirm Password',
+                        prefixIcon: Icon(Icons.lock_outline, color: Colors.grey[600]),
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            _obscureConfirmPassword ? Icons.visibility_off : Icons.visibility,
                             color: Colors.grey[600],
                           ),
 
                           onPressed: () {
                             setState(() {
-                              _obscureText = !_obscureText;
+                              _obscureConfirmPassword = !_obscureConfirmPassword;
                             });
                           },
                         ),
@@ -149,18 +216,16 @@ class _LoginViewState extends State<LoginView> {
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        
+
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                           borderSide: const BorderSide(color: Colors.black),
                         ),
                       ),
+                      
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return 'Password is required';
-                        }
-                        if (value.length < 6) {
-                          return 'Password must be at least 6 characters';
+                          return 'Please confirm your password';
                         }
                         return null;
                       },
@@ -176,7 +241,7 @@ class _LoginViewState extends State<LoginView> {
                     width: double.infinity,
                     height: 50,
                     child: ElevatedButton(
-                      onPressed: vm.isLoading ? null : _handleLogin,
+                      onPressed: vm.isLoading ? null : _handleRegister,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.black,
                         foregroundColor: Colors.white,
@@ -186,7 +251,7 @@ class _LoginViewState extends State<LoginView> {
                       ),
                       child: vm.isLoading
                           ? const CircularProgressIndicator(color: Colors.white)
-                          : const Text('Login', style: TextStyle(fontSize: 16)),
+                          : const Text('Sign Up', style: TextStyle(fontSize: 16)),
                     ),
                   );
                 },
@@ -196,13 +261,10 @@ class _LoginViewState extends State<LoginView> {
 
               TextButton(
                 onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const RegisterView()),
-                  );
+                  Navigator.pop(context);
                 },
                 child: Text(
-                  'Register',
+                  'Already have an account? Sign In',
                   style: TextStyle(
                     color: Colors.grey[700],
                     fontSize: 14,

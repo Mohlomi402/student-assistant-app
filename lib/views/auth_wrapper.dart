@@ -20,6 +20,6 @@ class AuthWrapper extends StatelessWidget {
     }
 
     
-    return const DetailScreen(); //must be changed!!
+    return const DetailScreen(); //must be changed
   }
 }
