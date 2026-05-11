@@ -1,21 +1,45 @@
 
 class UserModel {
-
   final String id;
+  final String firstName;
+  final String lastName;
   final String email;
-  final String role;
+  final String role; // "student" or "admin"
 
-  UserModel({required this.id, required this.email, required this.role});
+  UserModel({
+    required this.id,
+    required this.firstName,
+    required this.lastName,
+    required this.email,
+    required this.role,
+  });
 
+  // Supabase → Dart
   factory UserModel.fromJson(Map<String, dynamic> json) {
     return UserModel(
       id: json['id'].toString(),
-      email: json['email'].toString(),
-      role: json['role'].toString(),
+      firstName: json['first_name'] ?? '',
+      lastName: json['last_name'] ?? '',
+      email: json['email'] ?? '',
+      role: json['role'] ?? 'student',
     );
   }
 
+  // Dart → Supabase
   Map<String, dynamic> toJson() {
-    return {'id': id, 'email': email, 'role': role};
+    return {
+      'id': id,
+      'first_name': firstName,
+      'last_name': lastName,
+      'email': email,
+      'role': role,
+    };
   }
+
+  // Helper: full name
+  String get fullName => "$firstName $lastName";
+
+  // Helper: check role
+  bool get isAdmin => role == "admin";
+  bool get isStudent => role == "student";
 }

@@ -18,8 +18,6 @@ class AuthWrapper extends StatelessWidget {
     if (!authVm.isLoggedIn) {
       return const LoginView();
     }
-
-    
-    return const DetailScreen(); //must be changed
+     return null!;
   }
 }

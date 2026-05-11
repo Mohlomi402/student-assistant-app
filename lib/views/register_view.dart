@@ -14,6 +14,8 @@ class _RegisterViewState extends State<RegisterView> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController = TextEditingController();
+  final TextEditingController _firstNameController = TextEditingController();
+  final TextEditingController _lastNameController = TextEditingController();
 
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
@@ -34,16 +36,19 @@ class _RegisterViewState extends State<RegisterView> {
     final authVm = Provider.of<AuthViewModel>(context, listen: false);
 
     bool success = await authVm.register(
-      _emailController.text.trim(),
-      _passwordController.text,
-    );
-
+  firstName: _firstNameController.text.trim(),
+  lastName: _lastNameController.text.trim(),
+  email: _emailController.text.trim(),
+  password: _passwordController.text,
+  confirmPassword: _confirmPasswordController.text,
+);
     if (success && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Registration successful! Please login.'),
           backgroundColor: Colors.green,
-
+          duration: Durations.extralong4,
+          
         ),
       );
 
@@ -60,6 +65,8 @@ class _RegisterViewState extends State<RegisterView> {
 
   @override
   void dispose() {
+    _firstNameController.dispose();
+    _lastNameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
@@ -120,12 +127,55 @@ class _RegisterViewState extends State<RegisterView> {
                 child: Column(
                   children: [
 
+                    TextFormField(
+                   controller: _firstNameController,
+                   decoration: InputDecoration(
+                   hintText: 'First Name',
+                   prefixIcon: Icon(Icons.person_outline, color: Colors.grey[600]),
+                   border: OutlineInputBorder(
+                   borderRadius: BorderRadius.circular(12),
+                ),
+                focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: Colors.black),
+               ),
+               ),
+                validator: (value) {
+                if (value == null || value.isEmpty) {
+                 return 'First name is required';
+                }
+                 return null;
+                  },
+                  ),
+                    const SizedBox(height: 16),
+
+                     TextFormField(
+                       controller: _lastNameController,
+                        decoration: InputDecoration(
+                         hintText: 'Last Name',
+                        prefixIcon: Icon(Icons.person_outline, color: Colors.grey[600]),
+                        border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: Colors.black),
+                       ),
+                      ),
+                      validator: (value) {
+                         if (value == null || value.isEmpty) {
+                          return 'Last name is required';
+                      }
+                      return null;
+                       },
+                      ),
+                     const SizedBox(height: 16,),
 
                     TextFormField(
                       controller: _emailController,
                       keyboardType: TextInputType.emailAddress,
                       decoration: InputDecoration(
-                        labelText: 'Email',
+                        hintText: 'Email',
                         prefixIcon: Icon(Icons.email_outlined, color: Colors.grey[600]),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -151,48 +201,42 @@ class _RegisterViewState extends State<RegisterView> {
                     ),
 
                     const SizedBox(height: 16),
-                    TextFormField(
-                      controller: _passwordController,
-                      obscureText: _obscurePassword,
-                      decoration: InputDecoration(
+                    
+                     TextFormField(
+                        controller: _passwordController,
+                        obscureText: _obscurePassword,
+                        decoration: InputDecoration(
                         labelText: 'Password',
-                        prefixIcon: Icon(Icons.lock_outline, color: Colors.grey[600]),
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            _obscurePassword ? Icons.visibility_off : Icons.visibility,
-                            color: Colors.grey[600],
-
-                          ),
-                          onPressed: () {
-                            setState(() {
-                              _obscurePassword = !_obscurePassword;
-                            });
-                          },
-                        ),
-
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-
-                        ),
-
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: Colors.black),
-
-                        ),
+                       prefixIcon: Icon(Icons.lock_outline, color: Colors.grey[600]),
+                       suffixIcon: IconButton(
+                      icon: Icon(
+                      _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                       color: Colors.grey[600],
                       ),
-
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Password is required';
-                        }
-                        if (value.length < 6) {
-                          return 'Password must be at least 6 characters';
-                        }
-                        return null;
-                      },
-                    ),
-
+                      onPressed: () {
+                      setState(() {
+                      _obscurePassword = !_obscurePassword;
+                     });
+                    },
+                  ),
+                 border: OutlineInputBorder(
+                 borderRadius: BorderRadius.circular(12),
+                ),
+                focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: Colors.black),
+                ),
+                ),
+               validator: (value) {
+               if (value == null || value.isEmpty) {
+               return 'Password is required';
+                }
+               if (value.length < 6) {
+              return 'Password must be at least 6 characters';
+              }
+              return null;
+              },
+               ),
                     const SizedBox(height: 16),
                     TextFormField(
                       controller: _confirmPasswordController,
@@ -223,12 +267,17 @@ class _RegisterViewState extends State<RegisterView> {
                         ),
                       ),
                       
-                      validator: (value) {
+                      validator: (value) 
+                      {
                         if (value == null || value.isEmpty) {
                           return 'Please confirm your password';
+                          
                         }
-                        return null;
-                      },
+                         if (value != _passwordController.text) {
+                                  'Passwords do not match';
+                         }
+                         return null;
+                      }
                     ),
                   ],
                 ),

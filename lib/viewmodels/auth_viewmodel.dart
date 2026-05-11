@@ -1,110 +1,169 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import '../services/auth_service.dart';
+import '../services/user_service.dart';
 
 class AuthViewModel extends ChangeNotifier {
-  SupabaseClient get _supabase => Supabase.instance.client;
 
+  
+  // SERVICES
+  final AuthService _authService = AuthService();
+  final UserService _userService = UserService();
+
+  
   bool _isLoading = false;
   String? _errorMessage;
 
   bool get isLoading => _isLoading;
+
   String? get errorMessage => _errorMessage;
 
-  bool get isLoggedIn {
-    try {
-      return _supabase.auth.currentSession != null;
-    } catch (e) {
-      return false;
-    }
-  }
-  
-  String? get currentUserEmail {
-    try {
-      return _supabase.auth.currentUser?.email;
-    } catch (e) {
-      return null;
-    }
-  }
+  bool get isLoggedIn =>
+      _authService.currentUserId != null;
 
-  String? get currentUserId {
-    try {
-      return _supabase.auth.currentUser?.id;
-    } catch (e) {
-      return null;
-    }
-  }
+  String? get currentUserEmail =>
+      _authService.currentUserEmail;
 
-  Future<bool> login(String email, String password) async {
+  String? get currentUserId =>
+      _authService.currentUserId;
+
+  // LOGIN
+
+  Future<bool> login(
+      String email,
+      String password,
+      ) async {
+
     _isLoading = true;
     _errorMessage = null;
+
     notifyListeners();
 
     try {
-      final response = await _supabase.auth.signInWithPassword(
-        email: email.trim(),
-        password: password,
+
+      final response =
+      await _authService.login(
+        email,
+        password,
       );
+
       return response.user != null;
+
     } catch (e) {
+
       _errorMessage = e.toString();
+
       return false;
+
     } finally {
+
       _isLoading = false;
+
       notifyListeners();
     }
   }
 
-  
-  Future<bool> register(String email, String password, {String role = 'student'}) async {
+  // =========================
+  // REGISTER
+  // =========================
+  Future<bool> register({
+    required String firstName,
+    required String lastName,
+    required String email,
+    required String password,
+    required String confirmPassword,
+    String role = 'student',
+  }) async {
+
     _isLoading = true;
     _errorMessage = null;
+
     notifyListeners();
 
     try {
-      final response = await _supabase.auth.signUp(
-        email: email.trim(),
-        password: password,
-      );
 
-      if (response.user != null) {
-        await _supabase.from('users').insert({
-          'id': response.user!.id,
-          'email': email.trim(),
-          'role': role, 
-          'created_at': DateTime.now().toIso8601String(),
-        });
+      // PASSWORD VALIDATION
+      if (password != confirmPassword) {
+
+        _errorMessage =
+        "Passwords do not match";
+
+        return false;
       }
 
-      return response.user != null;
+      // CREATE AUTH ACCOUNT
+      final response =
+      await _authService.register(
+        email,
+        password,
+      );
+
+      final user = response.user;
+
+      if (user == null) {
+
+        _errorMessage =
+        "Registration failed";
+
+        return false;
+      }
+
+      // CREATE USER PROFILE
+      await _userService.createUserProfile({
+
+        'id': user.id,
+
+        'first_name': firstName,
+
+        'last_name': lastName,
+
+        'email': email.trim(),
+
+        'role': role,
+
+        'created_at':
+        DateTime.now().toIso8601String(),
+      });
+
+      return true;
+
     } catch (e) {
+
       _errorMessage = e.toString();
+
       return false;
+
     } finally {
+
       _isLoading = false;
+
       notifyListeners();
     }
   }
 
-  
   Future<String?> getUserRole() async {
+
     try {
-      final userId = currentUserId;
-      if (userId == null) return null;
-      
-      final response = await _supabase
-          .from('users')
-          .select('role')
-          .eq('id', userId)
-          .maybeSingle();
-      
-      return response?['role'] as String?;
+
+      final userId =
+          _authService.currentUserId;
+
+      if (userId == null) {
+        return null;
+      }
+
+      return await _userService
+          .getUserRole(userId);
+
     } catch (e) {
+
       return null;
     }
   }
 
   Future<void> logOut() async {
-    await _supabase.auth.signOut();
+
+    await _authService.logout();
+
     notifyListeners();
   }
 }
