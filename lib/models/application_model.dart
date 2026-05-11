@@ -5,7 +5,7 @@ class ApplicationModel {
   final String module1;
   final String module2;
   final String status;
-  final String eligible;
+  final bool eligible;
 
   ApplicationModel({
     required this.id,
@@ -17,16 +17,15 @@ class ApplicationModel {
     required this.eligible,
   });
 
-  factory ApplicationModel.fromMap(
+    factory ApplicationModel.fromMap(
       Map<String, dynamic> map) {
-
     return ApplicationModel(
       id: map['id'].toString(),
-      studentId: map['student_id'] ?? '',
-      year: map['year'] ?? '',
-      module1: map['module1'] ?? '',
-      module2: map['module2'] ?? '',
-      status: map['status'] ?? 'Pending',
+      studentId: map['student_id'],
+      year: map['year'],
+      module1: map['module1'],
+      module2: map['module2'],
+      status: map['status'],
       eligible: map['eligible'] ?? false,
     );
   }

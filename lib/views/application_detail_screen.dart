@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
 import '../viewmodels/application_viewmodel.dart';
-import 'application_form_screen.dart';
-import 'home_screen.dart';
+import '../models/application_model.dart';
+import '../views/application_form_screen.dart';
 
 class ApplicationDetailScreen extends StatelessWidget {
-
-  final Map<String, dynamic> application;
+  final ApplicationModel application;
 
   const ApplicationDetailScreen({
     super.key,
@@ -16,13 +14,11 @@ class ApplicationDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-
-    final applicationVM =
-        Provider.of<ApplicationViewModel>(context);
+    final applicationVM = context.read<ApplicationViewModel>();
 
     return Scaffold(
-
       appBar: AppBar(
+        centerTitle: true,
         title: const Text(
           'Application Details',
           style: TextStyle(color: Colors.white),
@@ -31,12 +27,9 @@ class ApplicationDetailScreen extends StatelessWidget {
       ),
       body: Padding(
         padding: const EdgeInsets.all(20),
-
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-
           children: [
-
             const Text(
               'Student Assistant Application',
               style: TextStyle(
@@ -47,22 +40,17 @@ class ApplicationDetailScreen extends StatelessWidget {
             const SizedBox(height: 30),
             Card(
               elevation: 4,
-
               child: Padding(
                 padding: const EdgeInsets.all(20),
-
                 child: Column(
-                  crossAxisAlignment:
-                      CrossAxisAlignment.start,
-
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-
                     Row(
                       children: [
                         const Icon(Icons.school),
                         const SizedBox(width: 10),
                         Text(
-                          'Year: ${application['year']}',
+                          'Year: ${application.year}',
                           style: const TextStyle(
                             fontSize: 18,
                           ),
@@ -76,7 +64,7 @@ class ApplicationDetailScreen extends StatelessWidget {
                         const SizedBox(width: 10),
                         Expanded(
                           child: Text(
-                            'Module 1: ${application['module1']}',
+                            'Module 1: ${application.module1}',
                             style: const TextStyle(
                               fontSize: 18,
                             ),
@@ -84,16 +72,14 @@ class ApplicationDetailScreen extends StatelessWidget {
                         ),
                       ],
                     ),
-
                     const SizedBox(height: 20),
-
                     Row(
                       children: [
                         const Icon(Icons.book_outlined),
                         const SizedBox(width: 10),
                         Expanded(
                           child: Text(
-                            'Module 2: ${application['module2']}',
+                            'Module 2: ${application.module2}',
                             style: const TextStyle(
                               fontSize: 18,
                             ),
@@ -107,17 +93,14 @@ class ApplicationDetailScreen extends StatelessWidget {
                         const Icon(Icons.info),
                         const SizedBox(width: 10),
                         Text(
-                          'Status: ${application['status']}',
+                          'Status: ${application.status}',
                           style: TextStyle(
                             fontSize: 18,
-                            color:
-                                application['status'] ==
-                                        'Approved'
-                                    ? Colors.green
-                                    : application['status'] ==
-                                            'Rejected'
-                                        ? Colors.red
-                                        : Colors.orange,
+                            color: application.status == 'Approved'
+                                ? Colors.green
+                                : application.status == 'Rejected'
+                                    ? Colors.red
+                                    : Colors.orange,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -128,26 +111,20 @@ class ApplicationDetailScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 40),
-            if (application['status'] == 'Pending')
-
+            if (application.status == 'Pending')
               SizedBox(
                 width: double.infinity,
-
                 child: ElevatedButton.icon(
-
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.blue,
-                    padding:
-                        const EdgeInsets.symmetric(
+                    padding: const EdgeInsets.symmetric(
                       vertical: 15,
                     ),
                   ),
-
                   icon: const Icon(
                     Icons.edit,
                     color: Colors.white,
                   ),
-
                   label: const Text(
                     'Edit Application',
                     style: TextStyle(
@@ -155,12 +132,10 @@ class ApplicationDetailScreen extends StatelessWidget {
                     ),
                   ),
                   onPressed: () {
-
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (_) =>
-                            ApplicationFormScreen(
+                        builder: (_) => ApplicationFormScreen(
                           application: application,
                         ),
                       ),
@@ -168,22 +143,17 @@ class ApplicationDetailScreen extends StatelessWidget {
                   },
                 ),
               ),
-              const SizedBox(height: 20),
-              if (application['status'] == 'Pending')
-
+            const SizedBox(height: 20),
+            if (application.status == 'Pending')
               SizedBox(
                 width: double.infinity,
-
                 child: ElevatedButton.icon(
-
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.red,
-                    padding:
-                        const EdgeInsets.symmetric(
+                    padding: const EdgeInsets.symmetric(
                       vertical: 15,
                     ),
                   ),
-
                   icon: const Icon(
                     Icons.delete,
                     color: Colors.white,
@@ -194,51 +164,31 @@ class ApplicationDetailScreen extends StatelessWidget {
                       color: Colors.white,
                     ),
                   ),
-
                   onPressed: () {
-
                     showDialog(
                       context: context,
-
-                      builder: (context) =>
-                          AlertDialog(
-
+                      builder: (context) => AlertDialog(
                         title: const Text(
                           'Delete Application',
                         ),
                         content: const Text(
                           'Are you sure you want to delete this application?',
                         ),
-
                         actions: [
-
                           TextButton(
                             onPressed: () {
                               Navigator.pop(context);
                             },
                             child: const Text('Cancel'),
                           ),
-
                           TextButton(
-
                             onPressed: () async {
-
-                              await applicationVM
-                                  .deleteApplication(
-                                application['id']
-                                    .toString(),
+                              await applicationVM.deleteApplication(
+                                application.id,
                               );
                               Navigator.pop(context);
-
-                              Navigator.pushReplacement(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) =>
-                                      const HomeScreen(),
-                                ),
-                              );
+                              Navigator.pop(context);
                             },
-
                             child: const Text(
                               'Delete',
                               style: TextStyle(
@@ -258,4 +208,3 @@ class ApplicationDetailScreen extends StatelessWidget {
     );
   }
 }
-
