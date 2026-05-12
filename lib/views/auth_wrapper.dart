@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../viewmodels/auth_viewmodel.dart';
 import 'login_view.dart';
+import 'package:student_assistant_app/views/home_screen.dart';
 import 'package:provider/provider.dart';
 
 
@@ -18,6 +19,6 @@ class AuthWrapper extends StatelessWidget {
     if (!authVm.isLoggedIn) {
       return const LoginView();
     }
-     return null!;
+     return const HomeScreen();
   }
 }
