@@ -1,169 +1,215 @@
+//Members
+// 220044173 Mohlomi_T
+// 221013252 Kwetle_ME
+// 221019628 Makhetha_L
+// 223008010 Brits_T
+// 221008431 Choane SRT
+// 221003714 Leeuw SA
+// 221027626 Mokhele M
+// 223043312 Choeu TM
+// 223038645 Ndlovu N
+
 import 'package:flutter/material.dart';
-import '../services/auth_service.dart';
-import '../services/user_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class AuthViewModel extends ChangeNotifier {
 
-  
-  // SERVICES
-  final AuthService _authService = AuthService();
-  final UserService _userService = UserService();
+  final supabase = Supabase.instance.client;
 
-  
-  bool _isLoading = false;
-  String? _errorMessage;
+  String? currentUserEmail;
+  String? errorMessage;
 
-  bool get isLoading => _isLoading;
+  bool isLoading = false;
+  bool sessionChecked = false;
+  bool isLoggedIn = false;
 
-  String? get errorMessage => _errorMessage;
+  String role = 'student';
 
-  bool get isLoggedIn =>
-      _authService.currentUserId != null;
-
-  String? get currentUserEmail =>
-      _authService.currentUserEmail;
-
-  String? get currentUserId =>
-      _authService.currentUserId;
-
+  // =====================================================
   // LOGIN
-
+  // =====================================================
   Future<bool> login(
-      String email,
-      String password,
-      ) async {
-
-    _isLoading = true;
-    _errorMessage = null;
-
-    notifyListeners();
+    String email,
+    String password,
+  ) async {
 
     try {
 
-      final response =
-      await _authService.login(
-        email,
-        password,
-      );
-
-      return response.user != null;
-
-    } catch (e) {
-
-      _errorMessage = e.toString();
-
-      return false;
-
-    } finally {
-
-      _isLoading = false;
-
+      isLoading = true;
+      errorMessage = null;
       notifyListeners();
-    }
-  }
 
-  // =========================
-  // REGISTER
-  // =========================
-  Future<bool> register({
-    required String firstName,
-    required String lastName,
-    required String email,
-    required String password,
-    required String confirmPassword,
-    String role = 'student',
-  }) async {
-
-    _isLoading = true;
-    _errorMessage = null;
-
-    notifyListeners();
-
-    try {
-
-      // PASSWORD VALIDATION
-      if (password != confirmPassword) {
-
-        _errorMessage =
-        "Passwords do not match";
-
-        return false;
-      }
-
-      // CREATE AUTH ACCOUNT
       final response =
-      await _authService.register(
-        email,
-        password,
+          await supabase.auth.signInWithPassword(
+        email: email,
+        password: password,
       );
 
       final user = response.user;
 
       if (user == null) {
 
-        _errorMessage =
-        "Registration failed";
-
+        isLoading = false;
+        errorMessage = "Invalid login details";
+        notifyListeners();
         return false;
       }
 
-      // CREATE USER PROFILE
-      await _userService.createUserProfile({
+      currentUserEmail = user.email;
 
-        'id': user.id,
+      final userData = await supabase
+          .from('users')
+          .select()
+          .eq('id', user.id)
+          .single();
 
-        'first_name': firstName,
+      role = (userData['role'] ?? 'student')
+          .toString()
+          .toLowerCase();
 
-        'last_name': lastName,
+      isLoggedIn = true;
+      sessionChecked = true;
 
-        'email': email.trim(),
-
-        'role': role,
-
-        'created_at':
-        DateTime.now().toIso8601String(),
-      });
+      isLoading = false;
+      notifyListeners();
 
       return true;
 
     } catch (e) {
 
-      _errorMessage = e.toString();
+      isLoading = false;
+      errorMessage = e.toString();
+
+      notifyListeners();
 
       return false;
+    }
+  }
 
-    } finally {
+  // =====================================================
+  // SESSION CHECK
+  // =====================================================
+  Future<void> checkSession() async {
 
-      _isLoading = false;
+    try {
+
+      final user = supabase.auth.currentUser;
+
+      if (user == null) {
+
+        isLoggedIn = false;
+        sessionChecked = true;
+        notifyListeners();
+        return;
+      }
+
+      isLoggedIn = true;
+      currentUserEmail = user.email;
+
+      final userData = await supabase
+          .from('users')
+          .select()
+          .eq('id', user.id)
+          .single();
+
+      role = (userData['role'] ?? 'student')
+          .toString()
+          .toLowerCase();
+
+      sessionChecked = true;
+
+      notifyListeners();
+
+    } catch (e) {
+
+      isLoggedIn = false;
+      sessionChecked = true;
+      errorMessage = e.toString();
 
       notifyListeners();
     }
   }
 
-  Future<String?> getUserRole() async {
+  // =====================================================
+  // LOGOUT
+  // =====================================================
+  Future<void> logout(BuildContext context) async {
 
-    try {
+    await supabase.auth.signOut();
 
-      final userId =
-          _authService.currentUserId;
-
-      if (userId == null) {
-        return null;
-      }
-
-      return await _userService
-          .getUserRole(userId);
-
-    } catch (e) {
-
-      return null;
-    }
-  }
-
-  Future<void> logOut() async {
-
-    await _authService.logout();
+    isLoggedIn = false;
+    role = 'student';
+    sessionChecked = false;
 
     notifyListeners();
+
+    Navigator.pushReplacementNamed(
+      context,
+      '/login',
+    );
   }
+  Future<bool> register({
+  required String firstName,
+  required String lastName,
+  required String email,
+  required String password,
+  required String confirmPassword,
+}) async {
+
+  try {
+
+    isLoading = true;
+    errorMessage = null;
+    notifyListeners();
+
+    // ❌ safety check (extra protection)
+    if (password != confirmPassword) {
+      errorMessage = "Passwords do not match";
+      isLoading = false;
+      notifyListeners();
+      return false;
+    }
+
+    // ===============================
+    // 1. CREATE AUTH USER (SUPABASE)
+    // ===============================
+    final response = await supabase.auth.signUp(
+      email: email,
+      password: password,
+    );
+
+    final user = response.user;
+
+    if (user == null) {
+      errorMessage = "Registration failed";
+      isLoading = false;
+      notifyListeners();
+      return false;
+    }
+
+    // ===============================
+    // 2. INSERT INTO USERS TABLE
+    // ===============================
+    await supabase.from('users').insert({
+      'uuid': user.id,
+      'firstName': firstName,
+      'lastName': lastName,
+      'email': email,
+      'role': 'student',
+    });
+
+    isLoading = false;
+    notifyListeners();
+
+    return true;
+
+  } catch (e) {
+
+    isLoading = false;
+    errorMessage = e.toString();
+    notifyListeners();
+
+    return false;
+  }
+}
 }

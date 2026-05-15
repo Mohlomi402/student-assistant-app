@@ -1,43 +1,31 @@
-import 'dart:typed_data';
-import 'package:image_picker/image_picker.dart';
+//Members
+// 220044173 Mohlomi_T
+// 221013252 Kwetle_ME
+// 221019628 Makhetha_L
+// 223008010 Brits_T
+// 221008431 Choane SRT
+// 221003714 Leeuw SA
+// 221027626 Mokhele M
+// 223043312 Choeu TM
+// 223038645 Ndlovu N
+
+import 'dart:io';
 import 'package:student_assistant_app/services/superbase_service.dart';
 
 class StorageService {
+  static final _client = SupabaseService.client;
 
-  // UPLOAD IMAGE
-  Future<String> uploadImage({
-    required String bucket,
-    required XFile file,
-  }) async {
+  static Future<String> uploadCV(File file, String userId) async {
+    final fileName = "${userId}_${DateTime.now().millisecondsSinceEpoch}.pdf";
 
-    // Convert image to bytes
-    final Uint8List fileBytes =
-        await file.readAsBytes();
+    await _client.storage
+        .from('cv')
+        .upload(fileName, file);
 
-    final fileName =
-        '${DateTime.now().millisecondsSinceEpoch}_${file.name}';
-
-    // Upload image
-    await SupabaseService.client.storage
-        .from(bucket)
-        .uploadBinary(fileName, fileBytes);
-
-    // Get public URL
-    final publicUrl = SupabaseService.client.storage
-        .from(bucket)
+    final url = _client.storage
+        .from('cv')
         .getPublicUrl(fileName);
 
-    return publicUrl;
-  }
-
-  // DELETE IMAGE
-  Future<void> deleteImage({
-    required String bucket,
-    required String filePath,
-  }) async {
-
-    await SupabaseService.client.storage
-        .from(bucket)
-        .remove([filePath]);
+    return url;
   }
 }

@@ -1,512 +1,417 @@
+//Members
+// 220044173 Mohlomi_T
+// 221013252 Kwetle_ME
+// 221019628 Makhetha_L
+// 223008010 Brits_T
+// 221008431 Choane SRT
+// 221003714 Leeuw SA
+// 221027626 Mokhele M
+// 223043312 Choeu TM
+// 223038645 Ndlovu N
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:student_assistant_app/viewmodels/auth_viewmodel.dart';
-
+import 'package:student_assistant_app/views/application_form.dart';
+import '../viewmodels/application_view_model.dart';
+import 'package:student_assistant_app/views/edit_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  State<HomeScreen> createState() =>
+      _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+
   @override
   void initState() {
     super.initState();
-    context.read<ApplicationViewModel>().fetchMyApplications();
-  }
 
-  void _showEditDialog(BuildContext context, Map<String, dynamic> application) {
-    final moduleController = TextEditingController(text: application['moduleName']);
-    final levelController = TextEditingController(text: application['academicLevel']);
+    Future.microtask(() {
 
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Edit Application'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: moduleController,
-              decoration: const InputDecoration(
-                labelText: 'Module Name',
-                border: OutlineInputBorder(),
-              ),
-            ),
-
-            const SizedBox(height: 16),
-            TextField(
-              controller: levelController,
-              decoration: const InputDecoration(
-                labelText: 'Academic Level',
-                border: OutlineInputBorder(),
-              ),
-            ),
-          ],
-        ),
-
-
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              context.read<ApplicationViewModel>().updateApplication(
-                application['id'],
-                {
-                  'moduleName': moduleController.text,
-                  'academicLevel': levelController.text,
-                },
-              );
-
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                 SnackBar(
-                  content: Text('Application updated'),
-                  backgroundColor: Colors.green,
-                  behavior: SnackBarBehavior.floating,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-              );
-            },
-
-
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.blueGrey[700],
-            ),
-
-            child: const Text('Save'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showDeleteDialog(BuildContext context, Map<String, dynamic> application) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Application'),
-        content: Text('Delete ${application['moduleName']} application? This cannot be undone.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-
-            onPressed: () {
-              context.read<ApplicationViewModel>().deleteApplication(application['id']);
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                 SnackBar(
-                  content: Text('Application deleted'),
-                  backgroundColor: Colors.red,
-                  behavior: SnackBarBehavior.floating,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-              );
-            },
-
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-            ),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
-    );
+      // ignore: use_build_context_synchronously
+      context
+          .read<ApplicationViewModel>()
+          .fetchMyApplications();
+    });
   }
 
   @override
   Widget build(BuildContext context) {
+
+    final vm =
+    context.watch<ApplicationViewModel>();
+
     return Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: Column(
-          children: [
-            
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.blueGrey[700], 
-                borderRadius: const BorderRadius.only(
-                  bottomLeft: Radius.circular(24),
-                  bottomRight: Radius.circular(24),
+      appBar: AppBar(
+       automaticallyImplyLeading: false,
+        title: const Text(
+          "Student Dashboard",
+        ),
+      ),
+      // =====================================================
+      // ADD APPLICATION BUTTON
+      // =====================================================
+      floatingActionButton:
+      FloatingActionButton.extended(
+
+        onPressed: () {
+
+          Navigator.push(
+
+            context,
+
+            MaterialPageRoute(
+              builder: (_) =>
+              const ApplicationFormScreen(),
+            ),
+          ).then((_) {
+
+            vm.fetchMyApplications();
+          });
+        },
+
+        icon: const Icon(Icons.add),
+
+        label: const Text(
+          "Apply",
+        ),
+      ),
+
+      // =====================================================
+      // BODY
+      // =====================================================
+      body: vm.isLoading
+
+          ? const Center(
+        child:
+        CircularProgressIndicator(),
+      )
+
+          : vm.applications.isEmpty
+
+          ? const Center(
+        child: Text(
+          "No applications submitted yet",
+        ),
+      )
+
+          : RefreshIndicator(
+
+        onRefresh: () async {
+
+          await vm.fetchMyApplications();
+        },
+
+        child: ListView.builder(
+
+          padding:
+          const EdgeInsets.all(16),
+
+          itemCount:
+          vm.applications.length,
+
+          itemBuilder:
+              (context, index) {
+
+            final application =
+            vm.applications[index];
+
+            final status =
+                application['status']
+                    .toString();
+
+            return Card(
+             color: Colors.lightBlueAccent,
+              elevation: 4,
+
+              margin:
+              const EdgeInsets.only(
+                bottom: 16,
+              ),
+
+              shape:
+              RoundedRectangleBorder(
+
+                borderRadius:
+                BorderRadius.circular(
+                  15,
                 ),
               ),
 
+              child: Padding(
+                
+                padding:
+                const EdgeInsets.all(
+                  16,
+                ),
 
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Hello',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.white70,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Consumer<AuthViewModel>(
-                    builder: (context, vm, child) {
-                      final email = vm.currentUserEmail ?? 'User';
-                      final name = email.split('@').first;
-                      return Text(
-                        'Welcome, $name',
-                        style: const TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
+                child: Column(
+
+                  crossAxisAlignment:
+                  CrossAxisAlignment
+                      .start,
+
+                  children: [
+
+                    // =====================================
+                    // HEADER
+                    // =====================================
+                    Row(
+
+                      mainAxisAlignment:
+                      MainAxisAlignment
+                          .spaceBetween,
+
+                      children: [
+
+                        const Text(
+                          "Student Assistant Card",
+
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight:
+                            FontWeight.bold,
+                          ),
                         ),
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'Here is your application activity.',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.white70,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
 
-            Consumer<ApplicationViewModel>(
-              builder: (context, vm, child) {
-                final total = vm.applications.length;
-                final pending = vm.applications.where((app) => app['status'] == 'pending').length;
-                final approved = vm.applications.where((app) => app['status'] == 'approved').length;
-
-                return Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Row(
-                    children: [
-                      _buildSummaryCard('Total', total.toString(), Colors.blueGrey),
-                      const SizedBox(width: 12),
-                      _buildSummaryCard('Pending', pending.toString(), Colors.orange),
-                      const SizedBox(width: 12),
-                      _buildSummaryCard('Approved', approved.toString(), Colors.green),
-                    ],
-                  ),
-                );
-              },
-            ),
-            const SizedBox(height: 24),
-
-           
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    'My Applications',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
-                    ),
-                  ),
-
-
-                  TextButton(
-                    onPressed: () {},
-                    style: TextButton.styleFrom(
-                      foregroundColor: Colors.grey[600],
-                    ),
-                    child: const Text('View All >'),
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 8),
-
-            
-            Expanded(
-              child: Consumer<ApplicationViewModel>(
-                builder: (context, vm, child) {
-                  if (vm.isLoading) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
-
-                  if (vm.errorMessage != null) {
-                    return Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            vm.errorMessage!,
-                            style: const TextStyle(color: Colors.red),
+                        Container(
+                          
+                          padding:
+                          const EdgeInsets
+                              .symmetric(
+                            horizontal:
+                            12,
+                            vertical: 6,
                           ),
 
-                          const SizedBox(height: 16),
-                          ElevatedButton(
-                            onPressed: () => vm.fetchMyApplications(),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.blueGrey[700],
-                            ),
+                          decoration:
+                          BoxDecoration(
+                            
+                            color:
+                            status ==
+                                "Approved"
 
-                            child: const Text('Retry'),
+                                ? Colors.green
+
+                                : status ==
+                                "Rejected"
+
+                                ? Colors.red
+
+                                : Colors.grey,
+
+                            borderRadius:
+                            BorderRadius
+                                .circular(
+                              20,
+                            ),
+                          ),
+
+                          child: Text(
+
+                            status,
+
+                            style:
+                            const TextStyle(
+                              color:
+                              Colors
+                                  .white,
+                              fontWeight:
+                              FontWeight
+                                  .bold,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(
+                      height: 20,
+                    ),
+
+                    // =====================================
+                    // YEAR LEVEL
+                    // =====================================
+                    Text(
+                      "Year Level: ${application['year_level']}",
+                    ),
+
+                    const SizedBox(
+                      height: 10,
+                    ),
+
+                    // =====================================
+                    // MODULE 1
+                    // =====================================
+                    Text(
+                      "Module 1: ${application['module1']}",
+                    ),
+
+                    Text(
+                      "Level: ${application['module1_level']}",
+                    ),
+
+                    const SizedBox(
+                      height: 10,
+                    ),
+
+                    // =====================================
+                    // MODULE 2
+                    // =====================================
+                    if (application['module2'] !=
+                        null &&
+                        application['module2']
+                            .toString()
+                            .isNotEmpty)
+
+                      Column(
+
+                        crossAxisAlignment:
+                        CrossAxisAlignment
+                            .start,
+
+                        children: [
+
+                          Text(
+                            "Module 2: ${application['module2']}",
+                          ),
+
+                          Text(
+                            "Level: ${application['module2_level']}",
                           ),
                         ],
                       ),
-                    );
-                  }
 
-                  if (vm.applications.isEmpty) {
-                    return Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(Icons.folder_open, size: 64, color: Colors.grey),
-                          const SizedBox(height: 16),
-                          Text(
-                            'No applications yet',
-                            style: TextStyle(color: Colors.grey[600]),
+                    const SizedBox(
+                      height: 20,
+                    ),
+
+                    // =====================================
+                    // ACTION BUTTONS
+                    // =====================================
+                    Row(
+
+                      mainAxisAlignment:
+                      MainAxisAlignment.end,
+
+                      children: [
+
+                       if (status == "pending")
+                        IconButton(
+                             icon: const Icon(
+                             Icons.edit,
+                            color: Colors.black45,
+                         ),
+                           onPressed: () {
+                           Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                          builder: (_) => EditApplicationScreen(
+                          application: application,
+                         ),
+                         ),
+                        ).then((_) {
+                        vm.fetchMyApplications();
+                      });
+                     },
+                     ),
+                        // ============================
+                        // DELETE BUTTON
+                        // ============================
+                        IconButton(
+
+                          icon: const Icon(
+                            Icons.delete,
+                            color:
+                            Colors.red,
                           ),
 
-                          const SizedBox(height: 16),
-                          ElevatedButton(
-                            onPressed: () {},
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.blueGrey[700],
-                            ),
-                            child: const Text('Apply Now'),
-                          ),
-                        ],
-                      ),
-                    );
-                  }
+                          onPressed: () async {
 
-                  return ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    itemCount: vm.applications.length,
-                    itemBuilder: (context, index) {
-                      final app = vm.applications[index];
-                      final isPending = app['status'] == 'pending';
+                            final confirm =
+                            await showDialog<bool>(
 
-                      return Container(
-                        margin: const EdgeInsets.only(bottom: 12),
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.grey[200]!),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.grey[100]!,
-                              offset: const Offset(0, 2),
-                              blurRadius: 4,
-                            ),
-                          ],
-                        ),
+                              context:
+                              context,
 
+                              builder:
+                                  (context) {
 
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
+                                return AlertDialog(
 
-                                Expanded(
-                                  child: Text(
-                                    app['moduleName'] ?? '',
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-
-
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 4,
+                                  title:
+                                  const Text(
+                                    "Delete Application",
                                   ),
 
-
-                                  decoration: BoxDecoration(
-                                    color: _getStatusColor(app['status'] ?? 'pending').withOpacity(0.2),
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: Text(
-                                    app['status'] ?? 'pending',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: _getStatusColor(app['status'] ?? 'pending'),
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-
-                            const SizedBox(height: 8),
-                            Text(
-                              'Level: ${app['academicLevel'] ?? ''}',
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: Colors.grey[600],
-                              ),
-                            ),
-
-                            const SizedBox(height: 8),
-                            Row(
-                              children: [
-                                Icon(Icons.calendar_today, size: 12, color: Colors.grey[500]),
-                                const SizedBox(width: 4),
-                                Text(
-                                  app['submittedDate'] != null
-                                      ? 'Submitted: ${_formatDate(app['submittedDate'])}'
-                                      : 'Submission date pending',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.grey[500],
-                                  ),
-                                ),
-                              ],
-                            ),
-
-                            const SizedBox(height: 12),
-                            if (isPending)
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.end,
-                                children: [
-                                  TextButton.icon(
-                                    onPressed: () => _showEditDialog(context, app),
-                                    icon: const Icon(Icons.edit, size: 18),
-                                    label: const Text('Edit'),
-                                    style: TextButton.styleFrom(
-                                      foregroundColor: Colors.blue,
-                                    ),
+                                  content:
+                                  const Text(
+                                    "Are you sure you want to delete this application?",
                                   ),
 
-                                  const SizedBox(width: 8),
-                                  TextButton.icon(
-                                    onPressed: () => _showDeleteDialog(context, app),
-                                    icon: const Icon(Icons.delete, size: 18),
-                                    label: const Text('Delete'),
-                                    style: TextButton.styleFrom(
-                                      foregroundColor: Colors.red,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              
-                            if (!isPending)
-                              Align(
-                                alignment: Alignment.centerRight,
-                                child: TextButton(
-                                  onPressed: () {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text('${app['moduleName']} is ${app['status']}'),
-                                        backgroundColor: Colors.blueGrey[700],
-                                        behavior: SnackBarBehavior.floating,
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(12),
-                                        ),
+                                  actions: [
+
+                                    TextButton(
+
+                                      onPressed:
+                                          () {
+
+                                        Navigator.pop(
+                                          context,
+                                          false,
+                                        );
+                                      },
+
+                                      child:
+                                      const Text(
+                                        "Cancel",
                                       ),
-                                    );
-                                  },
-                                  child: const Text('View Details'),
-                                ),
-                              ),
-                          ],
+                                    ),
+
+                                    ElevatedButton(
+
+                                      onPressed:
+                                          () {
+
+                                        Navigator.pop(
+                                          context,
+                                          true,
+                                        );
+                                      },
+
+                                      child:
+                                      const Text(
+                                        "Delete",
+                                      ),
+                                    ),
+                                  ],
+                                );
+                              },
+                            );
+
+                            if (confirm ==
+                                true) {
+
+                              await vm
+                                  .deleteApplication(
+
+                                application['id'],
+                              );
+                            }
+                          },
                         ),
-                      );
-                    },
-                  );
-                },
+                      ],
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
-        ),
-      ),
-
-
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {},
-        backgroundColor: Colors.blueGrey[700],
-        foregroundColor: Colors.white,
-        child: const Icon(Icons.add),
-      ),
-    );
-  }
-
-  Widget _buildSummaryCard(String title, String value, Color color) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
-        decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: color.withOpacity(0.3)),
-        ),
-
-
-        child: Column(
-          children: [
-            Text(
-              value,
-              style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-                color: color,
-              ),
-            ),
-
-            const SizedBox(height: 4),
-            Text(
-              title,
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.grey[600],
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ],
+            );
+          },
         ),
       ),
     );
-  }
-
-  Color _getStatusColor(String status) {
-    switch (status) {
-      case 'approved':
-        return Colors.green;
-      case 'rejected':
-        return Colors.red;
-      default:
-        return Colors.orange;
-    }
-  }
-
-  String _formatDate(DateTime date) {
-    return '${date.day} ${_getMonth(date.month)} ${date.year}';
-  }
-
-  String _getMonth(int month) {
-    const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
-    ];
-    return months[month - 1];
   }
 }
